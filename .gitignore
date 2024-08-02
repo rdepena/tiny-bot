@@ -1,0 +1,5 @@
+bin
+gpio
+.DS_Store
+*.o
+build
