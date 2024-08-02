@@ -14,7 +14,7 @@ void draw_grid(SDL_Renderer *renderer, int grid_size) {
     int width, height;
     SDL_GetRendererOutputSize(renderer, &width, &height);
 
-    // Set the draw color to black for the grid lines
+    // Set the draw color to green for the grid lines
     SDL_SetRenderDrawColor(renderer, 19, 154, 67, 0);
 
     // Draw vertical lines
@@ -39,22 +39,6 @@ void draw_trace_line(SDL_Renderer *renderer, int y) {
 
 }
 
-// Function to draw a thick sine wave curve
-void draw_thick_sine_wave(SDL_Renderer *renderer, int amplitude, int frequency, int phase_shift, int vertical_shift, int thickness) {
-    int width, height;
-    SDL_GetRendererOutputSize(renderer, &width, &height);
-
-    // Set the draw color to red for the sine wave
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    for (int x = 0; x < width; x++) {
-        int y = (int)(amplitude * sin(frequency * (x + phase_shift) * M_PI / 180) + vertical_shift);
-        for (int t = -thickness / 2; t <= thickness / 2; t++) {
-            SDL_RenderDrawPoint(renderer, x, y + t);
-        }
-    }
-}
-
 int main(int argc, char *argv[]) {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -70,7 +54,7 @@ int main(int argc, char *argv[]) {
     int vertical_shift = 0;
 
     // Create a window
-    SDL_Window *win = SDL_CreateWindow("SDL2 Render Loop Example", 
+    SDL_Window *win = SDL_CreateWindow("USVisualizer", 
                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
                                        SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (win == NULL) {

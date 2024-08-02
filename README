@@ -1,3 +1,7 @@
 Dependencies: 
 pkg-config - brew install pkg-config
 sdl2 - brew install sdl2
+
+TODO: 
+* Arduino code
+* USB-Serial code
