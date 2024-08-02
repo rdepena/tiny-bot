@@ -14,7 +14,6 @@ int trigPin = 9;
 int echoPin = 8;
 
 float ping () {
-  // print the value to Serial Monitor
   //10 micro-second pulse
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);

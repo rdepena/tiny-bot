@@ -9,7 +9,6 @@ const int SCREEN_HEIGHT = 600;
 const int FPS = 60;
 const int FRAME_DELAY = 1000 / FPS;
 
-// Function to draw a grid
 void draw_grid(SDL_Renderer *renderer, int grid_size) {
     int width, height;
     SDL_GetRendererOutputSize(renderer, &width, &height);
@@ -35,6 +34,7 @@ void draw_trace_line(SDL_Renderer *renderer, int y) {
     // Set the draw color to red for the trace line
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
+    // Draw horizontal trace line
     SDL_RenderDrawLine(renderer, 0, y, width, y);
 
 }
@@ -71,7 +71,6 @@ int main(int argc, char *argv[]) {
         SDL_Quit();
         return 1;
     }
-
 
     // Event loop
     SDL_Event e;
