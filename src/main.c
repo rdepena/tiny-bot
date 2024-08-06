@@ -1,13 +1,9 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>
 #include <time.h>
-#include <string.h>
-#include <fcntl.h>
 #include <errno.h>
-#include <termios.h>
-#include <unistd.h>
+#include "serial.h"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -44,67 +40,6 @@ void draw_trace_line(SDL_Renderer *renderer, int y) {
 
 }
 
-///Serial related: TODO extract to a separate file
-int set_interface_attribs(int fd, int speed) {
-    struct termios tty;
-    memset(&tty, 0, sizeof tty);
-
-    if (tcgetattr(fd, &tty) != 0) {
-        perror("tcgetattr");
-        return -1;
-    }
-
-    cfsetospeed(&tty, speed);
-    cfsetispeed(&tty, speed);
-
-    // 8-bit chars
-    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; 
-    // disable break processing
-    tty.c_iflag &= ~IGNBRK;
-    // no signaling chars, no echo,
-    // no canonical processing
-    tty.c_lflag = 0;
-    // no remapping, no delays
-    tty.c_oflag = 0;
-    // read doesn't block
-    tty.c_cc[VMIN]  = 0;
-    // 0.5 seconds read timeout
-    tty.c_cc[VTIME] = 5;
-    // shut off xon/xoff ctrl
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    // ignore modem controls,
-    // enable reading
-    tty.c_cflag |= (CLOCAL | CREAD);
-    // shut off parity
-    tty.c_cflag &= ~(PARENB | PARODD);
-    tty.c_cflag |= 0;
-    tty.c_cflag &= ~CSTOPB;
-    tty.c_cflag &= ~CRTSCTS;
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        perror("tcsetattr");
-        return -1;
-    }
-    return 0;
-}
-
-// Set the blocking mode of the serial port
-// TODO: extract to a separate file
-void set_blocking(int fd, int should_block) {
-    struct termios tty;
-    memset(&tty, 0, sizeof tty);
-    if (tcgetattr(fd, &tty) != 0) {
-        perror("tcgetattr");
-        return;
-    }
-
-    tty.c_cc[VMIN]  = should_block ? 1 : 0;
-    tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0)
-        perror("tcsetattr");
-}
-
 int main(int argc, char *argv[]) {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -120,14 +55,7 @@ int main(int argc, char *argv[]) {
     const char *portname = "/dev/cu.usbmodem1201"; 
 
     // Open the serial port
-    int fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        perror("open");
-        return 1;
-    }
-
-    set_interface_attribs(fd, B9600);  // set speed to 9600 bps, 8n1 (no parity)
-    set_blocking(fd, 0);                // set no blocking
+    int fd = open_port(portname);
 
     // Variables to track time and state
     Uint32 frame_start, frame_time;
@@ -172,16 +100,12 @@ int main(int argc, char *argv[]) {
         // Draw the grid
         draw_grid(ren, 50);
 
-        char buf[100];
         // Run every half a second(e.g., every second)
         if (frame_start % 100 < FRAME_DELAY) {
-            int n = read(fd, buf, sizeof(buf) - 1); // read up to 100 characters if ready to read
-            if (n > 0)
+            // Read from the serial port
+            int distance = read_from_port(fd);
+            if (distance > 0)
             {
-                buf[n] = '\0'; // Null-terminate the string
-
-                // Parse the received data as a float
-                int distance = atoi(buf);
                 printf("Received: %d cm\n", distance);
                 //Somehow the distance is not accurate, so we need to adjust it
                 if (distance > SCREEN_HEIGHT || distance ==0)
@@ -195,7 +119,6 @@ int main(int argc, char *argv[]) {
                     printf("Screen Height: %d relative distance %d cm verticlal shift: %d \n", SCREEN_HEIGHT, distance, vertical_shift);
                 }
             }
-            //vertical_shift = rand() % (SCREEN_HEIGHT - 100) + 50;
  
         }
 
@@ -215,7 +138,7 @@ int main(int argc, char *argv[]) {
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
-    close(fd);
+    clean_serial(fd);
 
     return 0;
 }

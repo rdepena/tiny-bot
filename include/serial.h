@@ -4,8 +4,14 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
-int set_interface_attribs(int fd, int speed);
+int open_port(const char *portname);
+
+int clean_serial(int fd);
+
+int read_from_port(int fd);
 
 #endif // SERIAL_H
