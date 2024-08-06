@@ -31,5 +31,5 @@ void setup() {
 
 void loop() {
   Serial.println(ping());
-  delay(500);
+  delay(100);
 }

@@ -1,7 +1,7 @@
 CC = cc
-CFLAGS = -g -Wall $(shell pkg-config --cflags sdl2 sdl2_ttf)
+CFLAGS = -g -Wall -Iinclude $(shell pkg-config --cflags sdl2 sdl2_ttf)
 LDFLAGS = $(shell pkg-config --libs sdl2 sdl2_ttf)
-SOURCES = Main.c
+SOURCES = src/main.c
 EXECUTABLEDEST = bin
 EXECUTABLE = program
 DEBUGGER = lldb

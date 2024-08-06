@@ -3,5 +3,7 @@ pkg-config - brew install pkg-config
 sdl2 - brew install sdl2
 
 TODO: 
-* USB-Serial code
-* Render trace line based on distance data from arduino.
+* Split serial code into it's own file
+* Add Data smoothing 
+* Add fonts and distance data to the matrix
+* Improve matrix code 
