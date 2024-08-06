@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
             if (distance > 0)
             {
                 printf("Received: %d cm\n", distance);
-                //Somehow the distance is not accurate, so we need to adjust it
+                //TODO Apply scaling factor to distance
                 if (distance > SCREEN_HEIGHT || distance ==0)
                 {
                     // If the distance is greater than the screen height, set the vertical shift to 50 to at least render a line.

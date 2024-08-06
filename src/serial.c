@@ -1,6 +1,5 @@
 #include "serial.h"
 
-//Serial related: TODO extract to a separate file
 int set_interface_attribs(int fd, int speed) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
@@ -53,7 +52,8 @@ void set_blocking(int fd, int should_block) {
     }
 
     tty.c_cc[VMIN]  = should_block ? 1 : 0;
-    tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+    // 0.5 seconds read timeout
+    tty.c_cc[VTIME] = 5;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
         perror("tcsetattr");
