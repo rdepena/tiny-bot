@@ -3,7 +3,11 @@
 #include <math.h>
 #include <time.h>
 #include <errno.h>
+#include <dirent.h>
 #include "serial.h"
+
+#define ARDUINO_PREFIX "/dev/cu.usbserial-"  // Modify for linux:  "/dev/ttyUSB" 
+#define MAX_PORTS 32
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -40,6 +44,29 @@ void draw_trace_line(SDL_Renderer *renderer, int y) {
 
 }
 
+char* find_arduino() {
+    static char portname[128];
+    struct dirent *entry;
+    DIR *dp = opendir("/dev/");
+
+    if (dp == NULL) {
+        perror("opendir");
+        return NULL;
+    }
+
+    while ((entry = readdir(dp))) {
+        if (strncmp(entry->d_name, "ttyUSB", 6) == 0 ||  // Linux
+            strncmp(entry->d_name, "ttyACM", 6) == 0 ||  // Linux
+            strncmp(entry->d_name, "cu.usbserial", 12) == 0) {  // macOS
+            snprintf(portname, sizeof(portname), "/dev/%s", entry->d_name);
+            closedir(dp);
+            return portname;
+        }
+    }
+    closedir(dp);
+    return NULL;
+}
+
 int main(int argc, char *argv[]) {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -51,11 +78,14 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
 
     //arduino port name will change
-    //TODO Figure out how to detect that
-    const char *portname = "/dev/cu.usbmodem1201"; 
+    char *arduino_port = find_arduino();
+    if (arduino_port == NULL) {
+        printf("Arduino not found\n");
+        return 1;
+    }
 
     // Open the serial port
-    int fd = open_port(portname);
+    int fd = open_port(arduino_port);
 
     // Variables to track time and state
     Uint32 frame_start, frame_time;
