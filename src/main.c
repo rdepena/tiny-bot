@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include "serial.h"
+#include <SDL2/SDL_ttf.h>
 
 #define ARDUINO_PREFIX "/dev/cu.usbserial-"  // Modify for linux:  "/dev/ttyUSB" 
 #define MAX_PORTS 32
@@ -13,6 +14,36 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int FPS = 60;
 const int FRAME_DELAY = 1000 / FPS;
+
+typedef struct {
+    SDL_Rect rect;   // Position and size
+    SDL_Color color; // Button color
+    char label[20];  // Button text
+} Button;
+
+
+void draw_button(SDL_Renderer *renderer, Button button, TTF_Font *font) {
+    // Draw button rectangle
+    SDL_SetRenderDrawColor(renderer, button.color.r, button.color.g, button.color.b, button.color.a);
+    SDL_RenderFillRect(renderer, &button.rect);
+
+    // Draw button text
+    SDL_Color textColor = {255, 255, 255, 255}; // White text
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font, button.label, textColor);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_Rect textRect = {
+        button.rect.x + (button.rect.w - textSurface->w) / 2,
+        button.rect.y + (button.rect.h - textSurface->h) / 2,
+        textSurface->w,
+        textSurface->h
+    };
+
+    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+}
+
 
 void draw_grid(SDL_Renderer *renderer, int grid_size) {
     int width, height;
@@ -77,6 +108,20 @@ int main(int argc, char *argv[]) {
     //initialize the random number generator
     srand(time(NULL));
 
+    //check for font support
+    if (TTF_Init() == -1)
+    {
+        printf("TTF_Init Error: %s\n", TTF_GetError());
+        return 1;
+    }
+
+    TTF_Font *font = TTF_OpenFont("assets/fonts/Roboto-Regular.ttf", 24);
+    if (!font)
+    {
+        printf("Failed to load font: %s\n", TTF_GetError());
+        return 1;
+    }
+
     //arduino port name will change
     char *arduino_port = find_arduino();
     if (arduino_port == NULL) {
@@ -113,13 +158,34 @@ int main(int argc, char *argv[]) {
     // Event loop
     SDL_Event e;
     int quit = 0;
+
+    Button btn_sit = {{50, 500, 100, 50}, {0, 122, 204, 255}, "Sit"};
+    Button btn_stand = {{200, 500, 100, 50}, {204, 50, 50, 255}, "Stand"};
+
     while (!quit) {
         frame_start = SDL_GetTicks();
 
         // Handle events
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
+        while (SDL_PollEvent(&e))
+        {
+            if (e.type == SDL_QUIT)
+            {
                 quit = 1;
+            }
+            else if (e.type == SDL_MOUSEBUTTONDOWN)
+            {
+                int mouseX = e.button.x, mouseY = e.button.y;
+
+                if (SDL_PointInRect(&(SDL_Point){mouseX, mouseY}, &btn_sit.rect))
+                {
+                    printf("You clicked sit!\n");
+                    write_to_port(fd, "sit\n");
+                }
+                else if (SDL_PointInRect(&(SDL_Point){mouseX, mouseY}, &btn_stand.rect))
+                {
+                    printf("You clicked stand!\n");
+                    write_to_port(fd, "stand\n");
+                }
             }
         }
 
@@ -153,6 +219,9 @@ int main(int argc, char *argv[]) {
         }
 
         draw_trace_line(ren, vertical_shift);
+
+        draw_button(ren, btn_sit, font);
+        draw_button(ren, btn_stand, font);
 
         // Present the renderer (show everything we have drawn)
         SDL_RenderPresent(ren);

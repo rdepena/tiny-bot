@@ -14,4 +14,6 @@ int clean_serial(int fd);
 
 int read_from_port(int fd);
 
+int write_to_port(int fd, char *msg);
+
 #endif // SERIAL_H

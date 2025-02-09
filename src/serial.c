@@ -96,3 +96,12 @@ int read_from_port(int fd) {
         return -1;
     }
 }
+
+int write_to_port(int fd, char *msg) {
+    int n = write(fd, msg, strlen(msg));
+    if (n < 0) {
+        perror("write");
+        return -1;
+    }
+    return n;
+}

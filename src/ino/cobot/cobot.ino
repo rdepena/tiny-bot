@@ -45,11 +45,8 @@ void setup() {
 
 
   // Start by setting all servos to rest position
-  backLeftServo.write(rest);
-  backRightServo.write(rest);
-  frontLeftServo.write(rest);
-  frontRightServo.write(rest);
-  delay(500); //wait for the servos to reach their place
+  stand();
+  delay(300); //wait for the servos to reach their place
 }
 
 //Function to calculate the distance to an obstacle
@@ -88,6 +85,28 @@ void turnRight() {
   frontRightServo.write(rest);
   delay(200);
 }
+
+//hind legs for forward just a bit, 
+void sit() {
+  frontLeftServo.write(rest);
+  backLeftServo.write(40);
+  backRightServo.write(140);
+  frontRightServo.write(rest);
+}
+
+void stand() {
+  backLeftServo.write(rest);
+  backRightServo.write(rest);
+  frontLeftServo.write(rest);
+  frontRightServo.write(rest);
+}
+
+void layDown() {
+  backLeftServo.write(0);
+  backRightServo.write(180);
+  frontLeftServo.write(0);
+  frontRightServo.write(180);
+}
  
 void walkForward() {
   // Move front left forward
@@ -118,14 +137,36 @@ void walkForward() {
 
 void loop() {
 
-  float distanceToObstacle = ping();
-  Serial.println(distanceToObstacle);
-  if (distanceToObstacle > 10) {
-    //walkForward();
-  } else {
-    //wave();
-    //turnRight();
+  if (Serial.available() > 0)
+  {
+    String command = Serial.readStringUntil('\n'); // Read until newline
+    command.trim();                                // Remove any leading/trailing whitespace
+
+    if (command == "sit")
+    {
+      sit();
+      Serial.println("Arduino: Sitting");
+    }
+    else if (command == "stand")
+    {
+      stand();
+      Serial.println("stand");
+    }
+    else
+    {
+      Serial.println("Arduino: Unknown command: " + command);
+    }
   }
-  //TODO: create a slower loop for hte ultrasonic sensor.
-  delay(100);
+  // //float distanceToObstacle = ping();
+  // //Serial.println(distanceToObstacle);
+  // if (distanceToObstacle > 10) {
+  //   //walkForward();
+  // } else {
+  //   //wave();
+  //   //turnRight();
+  // }
+  //TODO: create a slower loop for the ultrasonic sensor.
+
+  //sit();
+  //delay(100);
 }
