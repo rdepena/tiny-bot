@@ -2,9 +2,12 @@ Dependencies:
 pkg-config - brew install pkg-config
 sdl2 - brew install sdl2
 
+3d print from https://makerworld.com/en/models/523448#profileId-440067
+
 TODO: 
 * Add Data smoothing 
 * Add fonts and distance data to the matrix
 * Improve matrix code
 * Add matrix scaling code
 * Split SDL rendering into it's own file.
+*

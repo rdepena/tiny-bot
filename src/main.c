@@ -1,14 +1,10 @@
 #include <SDL2/SDL.h>
-#include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <errno.h>
-#include <dirent.h>
 #include "serial.h"
+#include "find_arduino.h"
 #include <SDL2/SDL_ttf.h>
-
-#define ARDUINO_PREFIX "/dev/cu.usbserial-"  // Modify for linux:  "/dev/ttyUSB" 
-#define MAX_PORTS 32
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -73,29 +69,6 @@ void draw_trace_line(SDL_Renderer *renderer, int y) {
     // Draw horizontal trace line
     SDL_RenderDrawLine(renderer, 0, y, width, y);
 
-}
-
-char* find_arduino() {
-    static char portname[128];
-    struct dirent *entry;
-    DIR *dp = opendir("/dev/");
-
-    if (dp == NULL) {
-        perror("opendir");
-        return NULL;
-    }
-
-    while ((entry = readdir(dp))) {
-        if (strncmp(entry->d_name, "ttyUSB", 6) == 0 ||  // Linux
-            strncmp(entry->d_name, "ttyACM", 6) == 0 ||  // Linux
-            strncmp(entry->d_name, "cu.usbserial", 12) == 0) {  // macOS
-            snprintf(portname, sizeof(portname), "/dev/%s", entry->d_name);
-            closedir(dp);
-            return portname;
-        }
-    }
-    closedir(dp);
-    return NULL;
 }
 
 int main(int argc, char *argv[]) {

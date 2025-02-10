@@ -60,6 +60,8 @@ float ping () {
 
 //wave with the front right servo
 void wave() {
+  sit();
+  delay(500);
   frontRightServo.write(180);
   delay(500);
   for( int i = 0; i <= 2; i++) {
@@ -134,28 +136,32 @@ void walkForward() {
   delay(200);
 }
 
+void process_remote_command(String command) {
+  if (command == "sit")
+  {
+    sit();
+    Serial.println("Arduino: Sitting");
+  }
+  else if (command == "stand")
+  {
+    stand();
+    Serial.println("stand");
+  }
+  else
+  {
+    Serial.println("Arduino: Unknown command: " + command);
+  }
+}
 
 void loop() {
 
   if (Serial.available() > 0)
   {
+
     String command = Serial.readStringUntil('\n'); // Read until newline
     command.trim();                                // Remove any leading/trailing whitespace
 
-    if (command == "sit")
-    {
-      sit();
-      Serial.println("Arduino: Sitting");
-    }
-    else if (command == "stand")
-    {
-      stand();
-      Serial.println("stand");
-    }
-    else
-    {
-      Serial.println("Arduino: Unknown command: " + command);
-    }
+    process_remote_command(command);
   }
   // //float distanceToObstacle = ping();
   // //Serial.println(distanceToObstacle);
