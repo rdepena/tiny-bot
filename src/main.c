@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     int vertical_shift = 0;
 
     // Create a window
-    SDL_Window *win = SDL_CreateWindow("Cobot Remote", 
+    SDL_Window *win = SDL_CreateWindow("TinyBot Remote", 
                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
                                        SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (win == NULL) {
