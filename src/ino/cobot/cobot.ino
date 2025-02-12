@@ -18,27 +18,32 @@
 * Right servos 180 Front; 0 Back.
 */
 
-Servo backLeftServo;
-Servo backRightServo;
-Servo frontLeftServo;
-Servo frontRightServo;
-int trigPin = 10;
-int echoPin = 11;
+Servo back_left_servo;
+Servo back_right_servo;
+Servo front_left_servo;
+Servo front_right_servo;
+int trig_pin = 10;
+int echo_pin = 11;
 int rest = 90;
+
+const int max_sample = 10;  // Maximum number of samples to smooth
+float buffer[max_sample];  // Buffer to store the last readings
+int buffer_index = 0;      // Index for circular buffer
+int buffer_count = 0;      // Number of values in the buffer
 
 //Speed of sound to CM conversion
 const float SOS_CM = 0.017;
 
 void setup() {
   //Attach the servos
-  backLeftServo.attach(6);
-  backRightServo.attach(5);
-  frontLeftServo.attach(9);
-  frontRightServo.attach(3);
+  back_left_servo.attach(6);
+  back_right_servo.attach(5);
+  front_left_servo.attach(9);
+  front_right_servo.attach(3);
 
   //Set the pin modes for the HC-SR04 ultrasonic module 
-  pinMode(trigPin, OUTPUT);  
-  pinMode(echoPin, INPUT);
+  pinMode(trig_pin, OUTPUT);  
+  pinMode(echo_pin, INPUT);
 
   // begin serial port to debug.
   Serial.begin(9600);
@@ -49,90 +54,118 @@ void setup() {
   delay(300); //wait for the servos to reach their place
 }
 
+// Function to smooth the readings from the ultrasonic sensor
+float smooth(float val) {
+    float sum = 0;
+
+    // Store the new value in the buffer (circular)
+    buffer[buffer_index] = val;
+    buffer_index = (buffer_index + 1) % max_sample;
+
+    // Keep track of how many values are stored
+    if (buffer_count < max_sample) {
+        buffer_count++;
+    }
+
+    // Compute the moving average
+    for (int i = 0; i < buffer_count; i++) {
+        sum += buffer[i];
+    }
+    return sum / buffer_count;
+}
+
 //Function to calculate the distance to an obstacle
 float ping () {
   //10 micro-second pulse
-  digitalWrite(trigPin, HIGH);
+  digitalWrite(trig_pin, HIGH);
   delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  return SOS_CM * pulseIn(echoPin, HIGH);
+  digitalWrite(trig_pin, LOW);
+  return SOS_CM * pulseIn(echo_pin, HIGH);
 }
 
 //wave with the front right servo
 void wave() {
   sit();
   delay(500);
-  frontRightServo.write(180);
+  front_right_servo.write(180);
   delay(500);
   for( int i = 0; i <= 2; i++) {
-    frontRightServo.write(120);
+    front_right_servo.write(120);
     delay(300);
-    frontRightServo.write(180);
+    front_right_servo.write(180);
     delay(300);
   }
-  frontRightServo.write(rest);
+  front_right_servo.write(rest);
   delay(500);
 }
 
 void turnRight() {
-  frontLeftServo.write(0);
-  backLeftServo.write(20);
+  front_left_servo.write(0);
+  back_left_servo.write(20);
   delay(200);
-  backRightServo.write(0);
-  frontRightServo.write(40);
+  back_right_servo.write(0);
+  front_right_servo.write(40);
   delay(200);
-  frontLeftServo.write(rest);
-  backLeftServo.write(rest);
-  backRightServo.write(rest);
-  frontRightServo.write(rest);
+  front_left_servo.write(rest);
+  back_left_servo.write(rest);
+  back_right_servo.write(rest);
+  front_right_servo.write(rest);
   delay(200);
 }
 
 //hind legs for forward just a bit, 
 void sit() {
-  frontLeftServo.write(rest);
-  backLeftServo.write(40);
-  backRightServo.write(140);
-  frontRightServo.write(rest);
+  front_left_servo.write(rest);
+  back_left_servo.write(40);
+  back_right_servo.write(140);
+  front_right_servo.write(rest);
+}
+
+void stretch() {
+  back_left_servo.write(rest);
+  back_right_servo.write(rest);
+  front_left_servo.write(0);
+  front_right_servo.write(180);
 }
 
 void stand() {
-  backLeftServo.write(rest);
-  backRightServo.write(rest);
-  frontLeftServo.write(rest);
-  frontRightServo.write(rest);
+  back_left_servo.write(rest);
+  back_right_servo.write(rest);
+  front_left_servo.write(rest);
+  front_right_servo.write(rest);
 }
 
 void layDown() {
-  backLeftServo.write(0);
-  backRightServo.write(180);
-  frontLeftServo.write(0);
-  frontRightServo.write(180);
+  back_left_servo.write(0);
+  back_right_servo.write(180);
+  front_left_servo.write(0);
+  front_right_servo.write(180);
 }
  
+//vestigal but useful for future reference.
 void walkForward() {
   // Move front left forward
-  frontLeftServo.write(0); // Forward
+  front_left_servo.write(0); // Forward
   delay(200);
-  frontLeftServo.write(rest); // Return to rest
+  front_left_servo.write(rest); // Return to rest
   delay(200);
 
   // Move back right forward
-  backRightServo.write(180); // Forward
+  back_right_servo.write(180); // Forward
   delay(200);
-  backRightServo.write(rest); // Return to rest
+  back_right_servo.write(rest); // Return to rest
   delay(200);
 
   // Move front right forward
-  frontRightServo.write(180); // Forward
+  front_right_servo.write(180); // Forward
   delay(200);
-  frontRightServo.write(rest); // Return to rest
+  front_right_servo.write(rest); // Return to rest
   delay(200);
 
   // Move back left forward
-  backLeftServo.write(0); // Forward
+  back_left_servo.write(0); // Forward
   delay(200);
-  backLeftServo.write(rest); // Return to rest
+  back_left_servo.write(rest); // Return to rest
   delay(200);
 }
 
@@ -147,6 +180,21 @@ void process_remote_command(String command) {
     stand();
     Serial.println("stand");
   }
+  else if (command == "wave")
+  {
+    wave();
+    Serial.println("Arduino: Waving");
+  }
+  else if (command == "lay-down")
+  {
+    layDown();
+    Serial.println("Arduino: Turning Right");
+  }
+  else if (command == "stretch")
+  {
+    stretch();
+    Serial.println("Arduino: Walking Forward");
+  }
   else
   {
     Serial.println("Arduino: Unknown command: " + command);
@@ -158,21 +206,15 @@ void loop() {
   if (Serial.available() > 0)
   {
 
-    String command = Serial.readStringUntil('\n'); // Read until newline
-    command.trim();                                // Remove any leading/trailing whitespace
+    String command = Serial.readStringUntil('\n');
+    command.trim();
 
     process_remote_command(command);
   }
-  // //float distanceToObstacle = ping();
-  // //Serial.println(distanceToObstacle);
-  // if (distanceToObstacle > 10) {
-  //   //walkForward();
-  // } else {
-  //   //wave();
-  //   //turnRight();
-  // }
-  //TODO: create a slower loop for the ultrasonic sensor.
 
-  //sit();
-  //delay(100);
+  float distanceToObstacle = ping();
+  float smoothedDistance = smooth(distanceToObstacle);
+  Serial.println(smoothedDistance);
+  //this is fast enough of a loop
+  delay(100);  
 }

@@ -10,6 +10,11 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int FPS = 60;
 const int FRAME_DELAY = 1000 / FPS;
+const int GRID_SIZE = 50;
+const int GRID_WIDTH_PADDING = 200; //Get some space for the buttons
+const int LINE_THICKNESS = 3;
+
+SDL_Color vibrant_green = {50, 200, 100, 255};
 
 typedef struct {
     SDL_Rect rect;   // Position and size
@@ -17,34 +22,42 @@ typedef struct {
     char label[20];  // Button text
 } Button;
 
-
 void draw_button(SDL_Renderer *renderer, Button button, TTF_Font *font) {
-    // Draw button rectangle
+    // Set border color
     SDL_SetRenderDrawColor(renderer, button.color.r, button.color.g, button.color.b, button.color.a);
-    SDL_RenderFillRect(renderer, &button.rect);
+
+    // Draw multiple rectangles to create a thick border
+    for (int i = 0; i < LINE_THICKNESS; i++) {
+        SDL_Rect border_rect = {
+            button.rect.x + i, 
+            button.rect.y + i, 
+            button.rect.w - 2 * i, 
+            button.rect.h - 2 * i
+        };
+        SDL_RenderDrawRect(renderer, &border_rect);
+    }
 
     // Draw button text
-    SDL_Color textColor = {255, 255, 255, 255}; // White text
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, button.label, textColor);
-    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_Surface *text_surface = TTF_RenderText_Solid(font, button.label, vibrant_green);
+    SDL_Texture *text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
     SDL_Rect textRect = {
-        button.rect.x + (button.rect.w - textSurface->w) / 2,
-        button.rect.y + (button.rect.h - textSurface->h) / 2,
-        textSurface->w,
-        textSurface->h
+        button.rect.x + (button.rect.w - text_surface->w) / 2,
+        button.rect.y + (button.rect.h - text_surface->h) / 2,
+        text_surface->w,
+        text_surface->h
     };
 
-    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+    SDL_RenderCopy(renderer, text_texture, NULL, &textRect);
 
-    SDL_FreeSurface(textSurface);
-    SDL_DestroyTexture(textTexture);
+    SDL_FreeSurface(text_surface);
+    SDL_DestroyTexture(text_texture);
 }
 
 
 void draw_grid(SDL_Renderer *renderer, int grid_size) {
     int width, height;
     SDL_GetRendererOutputSize(renderer, &width, &height);
-
+    width = width - GRID_WIDTH_PADDING; //Get some space for the buttons
     // Set the draw color to green for the grid lines
     SDL_SetRenderDrawColor(renderer, 19, 154, 67, 0);
 
@@ -62,12 +75,16 @@ void draw_grid(SDL_Renderer *renderer, int grid_size) {
 void draw_trace_line(SDL_Renderer *renderer, int y) {
     int width, height;
     SDL_GetRendererOutputSize(renderer, &width, &height);
+    width = width - GRID_WIDTH_PADDING; //Get some space for the buttons
 
     // Set the draw color to red for the trace line
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 50, 200, 100, 255);
 
     // Draw horizontal trace line
-    SDL_RenderDrawLine(renderer, 0, y, width, y);
+    // Draw multiple rectangles to create a thick border
+    for (int i = 0; i < LINE_THICKNESS; i++) {
+        SDL_RenderDrawLine(renderer, 0, y+i, width, y+i);
+    }
 
 }
 
@@ -88,7 +105,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    TTF_Font *font = TTF_OpenFont("assets/fonts/Roboto-Regular.ttf", 24);
+    TTF_Font *font = TTF_OpenFont("assets/fonts/joystix-monospace.otf", 24);
     if (!font)
     {
         printf("Failed to load font: %s\n", TTF_GetError());
@@ -110,7 +127,7 @@ int main(int argc, char *argv[]) {
     int vertical_shift = 0;
 
     // Create a window
-    SDL_Window *win = SDL_CreateWindow("USVisualizer", 
+    SDL_Window *win = SDL_CreateWindow("Cobot Remote", 
                                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
                                        SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (win == NULL) {
@@ -132,8 +149,12 @@ int main(int argc, char *argv[]) {
     SDL_Event e;
     int quit = 0;
 
-    Button btn_sit = {{50, 500, 100, 50}, {0, 122, 204, 255}, "Sit"};
-    Button btn_stand = {{200, 500, 100, 50}, {204, 50, 50, 255}, "Stand"};
+    // Command buttons
+    Button btn_sit = {{630, 50, 150, 50}, {50, 200, 100, 255}, "Sit"};
+    Button btn_stand = {{630, 150, 150, 50}, {50, 200, 100, 255}, "Stand"};
+    Button btn_wave = {{630, 250, 150, 50}, {50, 200, 100, 255}, "Wave"};
+    Button btn_lay_down = {{630, 350, 150, 50}, {50, 200, 100, 255}, "Lay"};
+    Button btn_stretch = {{630, 450, 150, 50}, {50, 200, 100, 255}, "Stretch"};
 
     while (!quit) {
         frame_start = SDL_GetTicks();
@@ -147,17 +168,33 @@ int main(int argc, char *argv[]) {
             }
             else if (e.type == SDL_MOUSEBUTTONDOWN)
             {
-                int mouseX = e.button.x, mouseY = e.button.y;
+                int mouse_x = e.button.x, mouse_y = e.button.y;
 
-                if (SDL_PointInRect(&(SDL_Point){mouseX, mouseY}, &btn_sit.rect))
+                //TOOD: Refactor this to a function
+                if (SDL_PointInRect(&(SDL_Point){mouse_x, mouse_y}, &btn_sit.rect))
                 {
                     printf("You clicked sit!\n");
                     write_to_port(fd, "sit\n");
                 }
-                else if (SDL_PointInRect(&(SDL_Point){mouseX, mouseY}, &btn_stand.rect))
+                else if (SDL_PointInRect(&(SDL_Point){mouse_x, mouse_y}, &btn_stand.rect))
                 {
                     printf("You clicked stand!\n");
                     write_to_port(fd, "stand\n");
+                }
+                else if (SDL_PointInRect(&(SDL_Point){mouse_x, mouse_y}, &btn_wave.rect))
+                {
+                    printf("You clicked wave!\n");
+                    write_to_port(fd, "wave\n");
+                }
+                else if (SDL_PointInRect(&(SDL_Point){mouse_x, mouse_y}, &btn_lay_down.rect))
+                {
+                    printf("You clicked lay down!\n");
+                    write_to_port(fd, "lay-down\n");
+                }
+                else if (SDL_PointInRect(&(SDL_Point){mouse_x, mouse_y}, &btn_stretch.rect))
+                {
+                    printf("You clicked walk!\n");
+                    write_to_port(fd, "stretch\n");
                 }
             }
         }
@@ -195,6 +232,9 @@ int main(int argc, char *argv[]) {
 
         draw_button(ren, btn_sit, font);
         draw_button(ren, btn_stand, font);
+        draw_button(ren, btn_wave, font);
+        draw_button(ren, btn_lay_down, font);
+        draw_button(ren, btn_stretch, font);
 
         // Present the renderer (show everything we have drawn)
         SDL_RenderPresent(ren);
