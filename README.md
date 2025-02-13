@@ -1,5 +1,6 @@
 # Tiny-bot:
-A super simple robot project designed to get kids excited about electronics and robotics.
+A super simple robot project designed to get my kids excited about electronics and robotics.
+<img src="https://raw.githubusercontent.com/rdepena/tiny-bot/refs/heads/main/assets/ezgif-3997eabecf6e73.gif">
 
 ## Chasis:
 The robot uses a 3D-printed chassis based on the [COBOT chasis](https://makerworld.com/en/models/523448#profileId-440067) by Luca Dilo.
@@ -31,6 +32,9 @@ Since the robot only has one ultrasonic sensor, I built a companion application 
 
 * Visualize sensor data on a vintage oscilloscope-style grid.
 * Send remote commands to control the robot.
+
+Screenshot:
+<img src="https://raw.githubusercontent.com/rdepena/tiny-bot/refs/heads/main/assets/comp-app.png">
 
 ## Dependencies: 
 To run this project, you'll need the following:
